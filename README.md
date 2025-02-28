@@ -248,4 +248,61 @@ QNAP NAS systems using ZFS storage pools have specific limitations that prevent 
    - Environment variables: NODE_ENV=production, NEXT_TELEMETRY_DISABLED=1
 5. Click "Create"
 
-The blog will be accessible at http://[YOUR-QNAP-IP]:3000
+### Method 3: Fixed Static File Serving (For UI Issues)
+
+If you're experiencing issues with static files not loading (CSS/JavaScript 404 errors), use the fixes in the `qnap-fixes` branch:
+
+1. Switch to the QNAP fixes branch:
+   ```bash
+   git checkout qnap-fixes
+   ```
+
+2. Use the specialized static file fix script:
+   ```bash
+   chmod +x fix-static-files.sh
+   ./fix-static-files.sh
+   ```
+
+3. Transfer the generated `blog-app-qnap-static-fixed.tar` to your QNAP NAS.
+
+4. On your QNAP NAS:
+   ```bash
+   docker stop blog-container
+   docker rm blog-container
+   docker load -i blog-app-qnap-static-fixed.tar
+   docker run -d -p 3000:3000 --name blog-container blog-app:qnap-static-fixed
+   ```
+
+This special build addresses static file issues by ensuring proper directory structure and permissions.
+
+### AMD64-Specific Builds
+
+If you're getting architecture warnings, use the AMD64-specific build script:
+
+```bash
+chmod +x build-for-qnap-amd64.sh
+./build-for-qnap-amd64.sh
+```
+
+This creates an AMD64-specific build for standard x86 QNAP NAS systems.
+
+## Repository Branch Structure
+
+This repository is organized with multiple branches for different use cases:
+
+- **`main`**: The primary development branch with standard functionality
+- **`qnap-fixes`**: Contains QNAP-specific fixes for static file serving issues
+
+To switch between branches:
+
+```bash
+# For standard development
+git checkout main
+
+# For QNAP-specific fixes
+git checkout qnap-fixes
+```
+
+The `qnap-fixes` branch includes:
+- `Dockerfile.qnap-static-fix`: Specialized Dockerfile with static file configuration
+- `fix-static-files.sh`: Script for building with proper static file handling
