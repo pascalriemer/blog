@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
+import { existsSync, readFileSync } from 'fs';
+import { join } from 'path';
 
 // Function to validate environment variables
 function validateEnvVariables() {
@@ -7,24 +9,70 @@ function validateEnvVariables() {
   const missingVars = requiredVars.filter(varName => !process.env[varName]);
 
   if (missingVars.length > 0) {
-    console.error(`Missing required environment variables: ${missingVars.join(', ')}`);
+    console.error(`[CRITICAL ERROR] Missing required SMTP environment variables: ${missingVars.join(', ')}`);
+    console.error(`Make sure to provide these values in your .env file or Docker environment variables.`);
+    console.error(`For Docker Compose, run: cp .env.docker .env && nano .env  # Fill in values, then run docker-compose`);
     return false;
   }
+  
+  // Check for empty values
+  const emptyVars = requiredVars.filter(varName => process.env[varName] === '');
+  if (emptyVars.length > 0) {
+    console.error(`[CRITICAL ERROR] The following SMTP environment variables are empty: ${emptyVars.join(', ')}`);
+    console.error(`Empty values are not allowed. Please set actual values for these variables.`);
+    return false;
+  }
+  
   return true;
+}
+
+// Get the configured recipient email from settings
+function getRecipientEmail() {
+  const SETTINGS_DIR = join(process.cwd(), 'content', 'settings');
+  const CONTACT_SETTINGS_FILE = join(SETTINGS_DIR, 'contact.json');
+  
+  // Default to environment variable if settings file doesn't exist
+  if (!existsSync(CONTACT_SETTINGS_FILE)) {
+    return process.env.ADMIN_EMAIL || 'pascal@riemer.digital';
+  }
+  
+  try {
+    const settings = JSON.parse(readFileSync(CONTACT_SETTINGS_FILE, 'utf8'));
+    return settings.contactEmail || process.env.ADMIN_EMAIL || 'pascal@riemer.digital';
+  } catch (error) {
+    console.error('Error reading contact settings:', error);
+    return process.env.ADMIN_EMAIL || 'pascal@riemer.digital';
+  }
 }
 
 // Create reusable transporter
 const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
-    },
-  });
+  try {
+    return nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
+      },
+    });
+  } catch (error) {
+    console.error('[CRITICAL ERROR] Failed to create email transporter:', error);
+    throw error;
+  }
 };
+
+// Function to send an email (exported for use in other APIs)
+export async function sendEmail(mailOptions) {
+  if (!validateEnvVariables()) {
+    throw new Error('SMTP environment variables not properly configured');
+  }
+  
+  const transporter = createTransporter();
+  await transporter.verify();
+  return transporter.sendMail(mailOptions);
+}
 
 export async function POST(request: Request) {
   try {
@@ -60,20 +108,36 @@ export async function POST(request: Request) {
 
     // Validate that we have all required environment variables
     if (!validateEnvVariables()) {
-      console.error('Email sending is disabled due to missing environment variables');
+      console.error('[CRITICAL ERROR] Email sending is disabled due to missing or invalid SMTP configuration');
       return NextResponse.json(
-        { error: 'Email sending is currently unavailable. Please try again later.' },
+        { error: 'Email sending is currently unavailable due to server configuration issues. Please contact the administrator.' },
         { status: 503 } // Service Unavailable
       );
     }
 
     // Create transporter
     const transporter = createTransporter();
+    
+    // Verify SMTP connection
+    try {
+      await transporter.verify();
+      console.log('SMTP connection verified successfully');
+    } catch (error) {
+      console.error('[CRITICAL ERROR] SMTP connection verification failed:', error);
+      return NextResponse.json(
+        { error: 'Failed to connect to email server. Please try again later or contact the administrator.' },
+        { status: 500 }
+      );
+    }
+
+    // Get the configured recipient email
+    const recipientEmail = getRecipientEmail();
+    console.log(`Sending contact form email to: ${recipientEmail}`);
 
     // Send email
     await transporter.sendMail({
       from: process.env.SMTP_FROM,
-      to: 'pascal@riemer.digital',
+      to: recipientEmail,
       subject: `Contact form message from ${name} (${email})`,
       text: message,
       html: `
@@ -90,7 +154,7 @@ export async function POST(request: Request) {
       `,
     });
     
-    console.log('Email sent successfully to pascal@riemer.digital');
+    console.log(`Email sent successfully to ${recipientEmail}`);
     
     return NextResponse.json(
       { success: true, message: 'Your message has been sent successfully!' },
@@ -98,7 +162,7 @@ export async function POST(request: Request) {
     );
     
   } catch (error) {
-    console.error('Error processing contact form:', error);
+    console.error('[ERROR] Error processing contact form:', error);
     return NextResponse.json(
       { error: 'Failed to send message. Please try again later.' },
       { status: 500 }

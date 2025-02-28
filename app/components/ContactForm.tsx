@@ -52,8 +52,7 @@ export default function ContactForm() {
           name,
           email,
           message,
-          _honeypot: honeypot,
-          recipient: 'pascal@riemer.digital'
+          _honeypot: honeypot
         }),
       })
       
@@ -184,7 +183,7 @@ export default function ContactForm() {
         )}
 
         <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-4">
-          Your message will be sent to pascal@riemer.digital
+          I will get back to you as soon as possible.
         </div>
       </form>
     </div>
