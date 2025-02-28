@@ -57,6 +57,9 @@ importers:
         specifier: 5.3.3
         version: 5.3.3
     devDependencies:
+      '@types/mdx':
+        specifier: ^2.0.13
+        version: 2.0.13
       '@types/node':
         specifier: 22.13.5
         version: 22.13.5
