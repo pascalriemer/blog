@@ -204,3 +204,48 @@ If you're encountering architecture compatibility issues (like "exec format erro
    ```
 
 This approach ensures your application works regardless of architecture differences between your development machine and deployment server.
+
+## QNAP NAS Deployment
+
+QNAP NAS systems using ZFS storage pools have specific limitations that prevent direct Docker builds. Follow these steps for deployment:
+
+### Method 1: Pre-built Image (Recommended)
+
+1. On your development machine, build and export the image:
+   ```bash
+   ./build-for-qnap.sh
+   ```
+
+2. Transfer the generated `blog-app-qnap.tar` file to your QNAP NAS.
+
+3. On your QNAP NAS, import the image:
+   ```bash
+   docker load -i blog-app-qnap.tar
+   ```
+
+4. Run the container:
+   ```bash
+   # Option 1: Use the provided script
+   chmod +x qnap-run.sh
+   ./qnap-run.sh
+   
+   # Option 2: Run manually
+   docker run -d --name blog-container --restart unless-stopped \
+     -p 3000:3000 \
+     -e NODE_ENV=production \
+     -e NEXT_TELEMETRY_DISABLED=1 \
+     blog-app:qnap
+   ```
+
+### Method 2: Using Container Station UI
+
+1. In Container Station, go to "Create" > "Import" 
+2. Select your transferred `blog-app-qnap.tar` file
+3. After importing, find the image and click "Create Container"
+4. Configure:
+   - Name: blog-container
+   - Port mapping: 3000:3000
+   - Environment variables: NODE_ENV=production, NEXT_TELEMETRY_DISABLED=1
+5. Click "Create"
+
+The blog will be accessible at http://[YOUR-QNAP-IP]:3000
