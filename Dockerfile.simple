@@ -1,0 +1,32 @@
+FROM node:18-alpine AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install pnpm directly
+RUN npm install -g pnpm
+
+# Copy package files
+COPY package.json pnpm-lock.yaml* .npmrc* ./
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy all project files
+COPY . .
+
+# Build the application
+RUN pnpm build
+
+# Create the public directory if it doesn't exist
+RUN mkdir -p /app/public
+
+# Set production environment
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV HOSTNAME="0.0.0.0"
+
+# Expose port 3000
+EXPOSE 3000
+
+# Start the server
+CMD ["node", ".next/standalone/server.js"] 

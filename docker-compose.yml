@@ -4,11 +4,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Disable BuildKit to avoid connection issues
+        DOCKER_BUILDKIT: 0
+        # Reduce build complexity
+        BUILDKIT_STEP_LOG_MAX_SIZE: "10485760"
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
+      # Disable BuildKit in container
+      - DOCKER_BUILDKIT=0
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
