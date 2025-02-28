@@ -360,7 +360,9 @@ The blog includes a contact form at the bottom of the page that allows visitors 
 
 3. Transfer the generated `blog-app-qnap-smtp.tar` to your QNAP NAS
 
-4. Deploy on your QNAP NAS:
+4. Deploy on your QNAP NAS using one of these methods:
+
+   **Method A: Using Docker Commands**
    ```bash
    docker stop blog-container || true
    docker rm blog-container || true
@@ -368,6 +370,14 @@ The blog includes a contact form at the bottom of the page that allows visitors 
    docker run -d --name blog-container --restart unless-stopped \
      -p 3000:3000 \
      blog-app:qnap-smtp
+   ```
+
+   **Method B: Using Docker Compose** (Recommended)
+   ```bash
+   # Transfer docker-compose.qnap.yml and deploy-with-compose.sh to your QNAP
+   # Then run:
+   chmod +x deploy-with-compose.sh
+   ./deploy-with-compose.sh
    ```
 
 The contact form will now send emails to `pascal@riemer.digital` via your configured SMTP server.
