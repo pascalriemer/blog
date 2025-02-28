@@ -14,6 +14,7 @@ const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || 'c73af9b33462f0ec13447ac89c70f9b72cb34ea95459d8979e19da83d188e8024db4d9d13a40c583a6489eb16af7cb57a66e0e73d51be31098b2459a33add77d';
 const ADMIN_PASSWORD_SALT = process.env.ADMIN_PASSWORD_SALT || 'c5eb0c1abcdef098765432109876fedcba';
 const JWT_SECRET = process.env.JWT_SECRET || 'ab41095dc2874128a50a3c93fb3a032c56781234567890abcdef0123456789ab';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'pascal@riemer.digital';
 
 // Email sending helper function (similar to the one in contact/route.ts)
 async function sendEmail(options: {
@@ -121,7 +122,7 @@ async function handleResetRequest(username: string) {
   try {
     await sendEmail({
       from: smtpFrom || 'noreply@example.com',
-      to: 'pascal@riemer.digital', // Sends to blog owner - in a real system, this would be the user's email
+      to: ADMIN_EMAIL, // Use the configured admin email
       subject: 'Password Reset Request',
       text: `You requested a password reset for your blog admin account. Click this link to reset your password: ${resetUrl}`,
       html: `

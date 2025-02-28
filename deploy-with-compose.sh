@@ -23,6 +23,8 @@ if [ ! -f ".env" ]; then
         echo "    Password: changeme"
         echo "    Important: Change this password after first login!"
         echo ""
+        echo "⚠️ IMPORTANT: Make sure to set ADMIN_EMAIL to your email address for password resets."
+        echo ""
         echo "Then run this script again."
         exit 1
     else
@@ -34,7 +36,7 @@ fi
 
 # Check for empty required variables
 source .env
-REQUIRED_VARS=("SMTP_HOST" "SMTP_PORT" "SMTP_USER" "SMTP_PASSWORD" "SMTP_FROM" "ADMIN_USERNAME" "ADMIN_PASSWORD_HASH" "ADMIN_PASSWORD_SALT" "JWT_SECRET")
+REQUIRED_VARS=("SMTP_HOST" "SMTP_PORT" "SMTP_USER" "SMTP_PASSWORD" "SMTP_FROM" "ADMIN_USERNAME" "ADMIN_PASSWORD_HASH" "ADMIN_PASSWORD_SALT" "JWT_SECRET" "ADMIN_EMAIL")
 MISSING_VARS=()
 
 for var in "${REQUIRED_VARS[@]}"; do
@@ -83,6 +85,7 @@ echo "✅ Deployment completed!"
 echo "Your blog should now be accessible at http://$(hostname -I | awk '{print $1}'):3000"
 echo "The admin post editor is available at http://$(hostname -I | awk '{print $1}'):3000/admin/login"
 echo "The contact form will send emails to pascal@riemer.digital using your SMTP settings."
+echo "Password resets will be sent to $ADMIN_EMAIL"
 
 # Show admin credentials info if using defaults
 if [ "$ADMIN_USERNAME" = "admin" ] && [ "$ADMIN_PASSWORD_HASH" = "c73af9b33462f0ec13447ac89c70f9b72cb34ea95459d8979e19da83d188e8024db4d9d13a40c583a6489eb16af7cb57a66e0e73d51be31098b2459a33add77d" ]; then

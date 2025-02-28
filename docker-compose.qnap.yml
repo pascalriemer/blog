@@ -10,14 +10,20 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
-      # SMTP variables are already embedded in the image
-      # If you need to override them, uncomment and modify the lines below
-      # - SMTP_HOST=smtp.example.com
-      # - SMTP_PORT=587
-      # - SMTP_SECURE=false
-      # - SMTP_USER=your-email@example.com
-      # - SMTP_PASSWORD=your-password
-      # - SMTP_FROM=your-email@example.com
+      # Important: SMTP values must be provided as environment variables when running this compose file
+      # SMTP credentials are required for the contact form to function
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM=${SMTP_FROM}
+      # Admin authentication settings
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH}
+      - ADMIN_PASSWORD_SALT=${ADMIN_PASSWORD_SALT}
+      - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
     # Optional: add volume mounts if you need persistent storage
-    # volumes:
-    #   - ./data:/app/data 
+    volumes:
+      - ./content:/app/content 
