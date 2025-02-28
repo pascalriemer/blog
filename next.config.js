@@ -15,10 +15,9 @@ const nextConfig = {
   // Ensure trailing slashes for consistent URLs
   trailingSlash: true,
 
-  // Experimental features
+  // Add any other configurations here
   experimental: {
-    // Enable app directory
-    appDir: true
+    // Any other experimental features can go here
   }
 }
 
