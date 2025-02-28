@@ -1,0 +1,46 @@
+# Version control
+.git
+.gitignore
+
+# Build outputs - but specify more precisely to avoid issues
+.next/*
+!.next/standalone
+!.next/static
+out
+build
+dist
+
+# Dependencies
+node_modules
+.pnpm-store
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE config
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker related
+Dockerfile
+.dockerignore
+
+# Testing
+coverage
+.nyc_output 

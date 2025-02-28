@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { CustomMDX } from 'app/components/mdx'
 import { formatDate, getBlogPosts } from 'app/blog/utils'
 import { baseUrl } from 'app/sitemap'
+import { Metadata } from 'next'
 
 export async function generateStaticParams() {
   let posts = getBlogPosts()
@@ -11,10 +12,12 @@ export async function generateStaticParams() {
   }))
 }
 
-export function generateMetadata({ params }) {
-  let post = getBlogPosts().find((post) => post.slug === params.slug)
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const slug = params.slug
+  
+  let post = getBlogPosts().find((post) => post.slug === slug)
   if (!post) {
-    return
+    return { title: 'Blog Post Not Found' }
   }
 
   let {
@@ -51,8 +54,10 @@ export function generateMetadata({ params }) {
   }
 }
 
-export default function Blog({ params }) {
-  let post = getBlogPosts().find((post) => post.slug === params.slug)
+export default async function Blog({ params }: { params: { slug: string } }) {
+  const slug = params.slug
+  
+  let post = getBlogPosts().find((post) => post.slug === slug)
 
   if (!post) {
     notFound()
