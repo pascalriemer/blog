@@ -1,10 +1,9 @@
 services:
   blog:
-    # Use the appropriate image based on your server architecture:
-    # For AMD64/x86_64 servers:
-    image: blog-app:amd64
-    # For ARM64 servers (uncomment the line below and comment out the line above):
-    #image: blog-app:arm64
+    # Build from local Dockerfile instead of pulling an image
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:
