@@ -393,6 +393,72 @@ The contact form includes a honeypot field to protect against spam bots:
 
 This approach catches most automated spam while being completely transparent to legitimate users.
 
+### Admin Authentication
+
+The blog includes a secure admin authentication system with the following features:
+
+- **Default Admin Credentials**: 
+  - Username: `admin`
+  - Password: `changeme` (change this immediately after first login!)
+
+- **Authentication Features**:
+  - JWT-based authentication with HTTP-only cookies
+  - Password reset via email using SMTP
+  - Dashboard for password management
+
+#### Customizing Admin Credentials via Environment Variables
+
+For increased security, you can override the default admin credentials using environment variables in your Docker Compose deployment:
+
+1. **Simple Override**: Set environment variables directly in your docker-compose.yml file:
+
+```yaml
+services:
+  blog:
+    # other settings...
+    environment:
+      # SMTP settings...
+      - ADMIN_USERNAME=your_custom_username
+      # Note: For direct password use (less secure but simpler)
+      - ADMIN_PASSWORD_HASH=generated_password_hash
+      - ADMIN_PASSWORD_SALT=your_custom_salt
+      - JWT_SECRET=your_custom_secret
+```
+
+2. **Secure Method**: Generate a proper password hash and set via `.env` file:
+
+```bash
+# Generate secure credentials (use the built-in script)
+./deploy-with-compose.sh         # Creates default .env
+pnpm setup-admin                 # Generates proper password hash
+
+# Then update your .env file with the values
+ADMIN_USERNAME=your_custom_username
+ADMIN_PASSWORD_HASH=hashed_password_from_setup_script
+ADMIN_PASSWORD_SALT=salt_from_setup_script
+JWT_SECRET=secret_from_setup_script
+```
+
+3. **Production Deployment Example**:
+
+```bash
+# Create a secure .env file
+cat > .env << EOL
+# SMTP settings...
+
+# Admin authentication with custom values
+ADMIN_USERNAME=admin_prod
+ADMIN_PASSWORD_HASH=c73af9b33462f0ec13447ac89c70f9b72cb34ea95459d8979e19da83d188e8024db4d9d13a40c583a6489eb16af7cb57a66e0e73d51be31098b2459a33add77d
+ADMIN_PASSWORD_SALT=c5eb0c1abcdef098765432109876fedcba
+JWT_SECRET=$(openssl rand -hex 32)
+EOL
+
+# Deploy with custom credentials
+docker-compose -f docker-compose.qnap.yml up -d
+```
+
+Note that when you change your admin password through the UI, the system will display a new password hash that should be updated in your environment variables for persistence across container restarts.
+
 ## Repository Structure
 
 This repository is organized with the following branches:
