@@ -209,7 +209,7 @@ This approach ensures your application works regardless of architecture differen
 
 QNAP NAS systems using ZFS storage pools have specific limitations that prevent direct Docker builds. Follow these steps for deployment:
 
-### Method 1: Pre-built Image (Recommended)
+### Method 1: Pre-built Image (Basic)
 
 1. On your development machine, build and export the image:
    ```bash
@@ -248,4 +248,110 @@ QNAP NAS systems using ZFS storage pools have specific limitations that prevent 
    - Environment variables: NODE_ENV=production, NEXT_TELEMETRY_DISABLED=1
 5. Click "Create"
 
+### Method A3: Fixed Static File Serving (Recommended for UI Issues)
+
+If you're experiencing 404 errors for JavaScript/CSS files or UI rendering issues, use this method:
+
+1. On your development machine, build and export the optimized image with static file fixes:
+   ```bash
+   # Make the script executable
+   chmod +x fix-static-files.sh
+   
+   # Run the optimized build script
+   ./fix-static-files.sh
+   ```
+
+2. Transfer the generated `blog-app-qnap-static-fixed.tar` file to your QNAP NAS.
+
+3. On your QNAP NAS, import and run the fixed image:
+   ```bash
+   # Stop and remove any existing container
+   docker stop blog-container || true
+   docker rm blog-container || true
+   
+   # Load the fixed image
+   docker load -i blog-app-qnap-static-fixed.tar
+   
+   # Run the container with the fixed image
+   docker run -d --name blog-container --restart unless-stopped \
+     -p 3000:3000 \
+     -e NODE_ENV=production \
+     -e NEXT_TELEMETRY_DISABLED=1 \
+     blog-app:qnap-static-fixed
+   ```
+
+This method specifically fixes issues with static file serving by:
+- Ensuring `.next/static` directory is properly copied and accessible
+- Setting correct file permissions on all directories
+- Using proper Next.js standalone configuration
+- Optimizing the container for QNAP's filesystem limitations
+
+### AMD64-Specific Builds
+
+QNAP NAS systems typically use x86_64/AMD64 architecture. To avoid platform mismatch warnings and ensure optimal performance:
+
+1. For standard deployment:
+   ```bash
+   # Make the script executable
+   chmod +x build-for-qnap-amd64.sh
+   
+   # Build AMD64-specific image
+   ./build-for-qnap-amd64.sh
+   ```
+
+2. For deployment with static file fixes:
+   ```bash
+   # Make the script executable
+   chmod +x fix-qnap-amd64.sh
+   
+   # Build AMD64-specific image with static file fixes
+   ./fix-qnap-amd64.sh
+   ```
+
+The generated tar files will be properly tagged for AMD64 architecture.
+
+### Additional QNAP-Specific Scripts
+
+This branch contains several helper scripts for QNAP deployment:
+
+| Script | Purpose |
+|--------|---------|
+| `build-for-qnap.sh` | Basic build script for QNAP |
+| `build-for-qnap-amd64.sh` | AMD64-specific build |
+| `fix-static-files.sh` | Fixes static file serving issues |
+| `fix-qnap-amd64.sh` | AMD64-specific build with static file fixes |
+| `qnap-run.sh` | Helper script for running on QNAP |
+
+### Troubleshooting QNAP Deployment
+
+If you encounter issues with your deployment:
+
+1. **404 Errors for CSS/JS**: Use the static file fix method (A3)
+2. **Platform Mismatch Warnings**: Use the AMD64-specific builds
+3. **Permission Errors**: The specialized Dockerfiles handle these automatically
+4. **Blank Pages/UI Issues**: Check that static files are being served correctly
+
 The blog will be accessible at http://[YOUR-QNAP-IP]:3000
+
+## Repository Structure
+
+This repository is organized with the following branches:
+
+- **main**: Standard deployment version for most environments
+- **qnap-fixes**: Special branch containing QNAP-specific optimizations
+
+To switch between branches:
+```bash
+# For QNAP-specific deployment
+git checkout qnap-fixes
+
+# For standard deployment
+git checkout main
+```
+
+The `qnap-fixes` branch includes these additional files:
+- `Dockerfile.qnap`: Basic QNAP-optimized Dockerfile
+- `Dockerfile.qnap-static-fix`: Enhanced Dockerfile with static file fixes
+- `fix-static-files.sh`: Script to build with static file fixes
+- `build-for-qnap-amd64.sh`: Script for AMD64-specific builds
+- `qnap-run.sh`: Helper script for running on QNAP
