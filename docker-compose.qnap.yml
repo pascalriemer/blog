@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+  blog:
+    image: blog-app:qnap-smtp
+    container_name: blog-container
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      # SMTP variables are already embedded in the image
+      # If you need to override them, uncomment and modify the lines below
+      # - SMTP_HOST=smtp.example.com
+      # - SMTP_PORT=587
+      # - SMTP_SECURE=false
+      # - SMTP_USER=your-email@example.com
+      # - SMTP_PASSWORD=your-password
+      # - SMTP_FROM=your-email@example.com
+    # Optional: add volume mounts if you need persistent storage
+    # volumes:
+    #   - ./data:/app/data 
