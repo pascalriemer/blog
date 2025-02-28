@@ -1,63 +1,58 @@
-# Stage 1: Dependencies
-FROM node:23.9.0-alpine AS deps
-RUN apk add --no-cache libc6-compat
+FROM --platform=linux/amd64 node:23-alpine AS base
+
+# Add package manager lockfiles for better caching
+FROM base AS deps
 WORKDIR /app
 
-# Install pnpm directly without using corepack
-RUN npm install -g pnpm@latest
+# Copy package.json first for better layer caching
+COPY package.json ./
+# Copy lock file if it exists
+COPY package-lock.json* ./
 
-# Copy package files and npmrc for dependency resolution
-COPY package.json pnpm-lock.yaml* .npmrc* ./
+# Install packages with proper TypeScript dependencies and handle dependency conflicts
+RUN npm install --ignore-scripts --legacy-peer-deps
 
-# Install dependencies with special flags to fix React version conflicts
-RUN pnpm install --frozen-lockfile
-
-# Stage 2: Builder
-FROM node:23.9.0-alpine AS builder
+# Rebuild the source code only when needed
+FROM base AS builder
 WORKDIR /app
 
-# Install pnpm directly
-RUN npm install -g pnpm@latest
-
-# Copy dependency files including .npmrc
+# Copy node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/.npmrc ./
-
-# Copy all project files
 COPY . .
 
-# Build the application
-RUN pnpm build
-
-# Create an empty public directory if it doesn't exist
-RUN mkdir -p /app/public
-
-# Stage 3: Runner
-FROM node:23.9.0-alpine AS runner
-WORKDIR /app
-
-# Set environment variables using correct format
+# Set environment variables for build
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create non-root user for security
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Create a jsconfig.json file to help resolve paths correctly
+RUN echo '{"compilerOptions":{"baseUrl":".","paths":{"app/*":["./app/*"]}}}' > jsconfig.json
 
-# Copy necessary files from builder
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.js ./
+# Optimize build for production only - with config to ignore Edge Runtime warnings
+RUN NODE_OPTIONS=--max_old_space_size=4096 npm run build
+
+# Production image, copy all the files and run the app
+FROM base AS runner
+WORKDIR /app
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs 
+
+USER nextjs
+
+# Copy only the necessary files for production
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/content ./content
 
-# Ensure correct permissions
-RUN mkdir -p /app/public && chown nextjs:nodejs /app/public
-
-# Expose port 3000
+# Expose port
 EXPOSE 3000
-
-# Set hostname to 0.0.0.0 to allow external connections using correct format
-ENV HOSTNAME="0.0.0.0"
 
 # Start the server
 CMD ["node", "server.js"] 
