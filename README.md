@@ -334,6 +334,44 @@ If you encounter issues with your deployment:
 
 The blog will be accessible at http://[YOUR-QNAP-IP]:3000
 
+### Contact Form with SMTP
+
+The blog includes a contact form at the bottom of the page that allows visitors to send you messages directly. To enable email sending via SMTP:
+
+1. Create a `.env` file with your SMTP settings (copy from `.env.example`):
+   ```
+   # Contact Form SMTP Configuration
+   SMTP_HOST=smtp.example.com
+   SMTP_PORT=587
+   SMTP_SECURE=false
+   SMTP_USER=your-smtp-username
+   SMTP_PASSWORD=your-smtp-password
+   SMTP_FROM=contact@yourdomain.com
+   ```
+
+2. Build a special Docker image with SMTP settings included:
+   ```bash
+   # Make the script executable
+   chmod +x create-qnap-image-with-smtp.sh
+   
+   # Run the script
+   ./create-qnap-image-with-smtp.sh
+   ```
+
+3. Transfer the generated `blog-app-qnap-smtp.tar` to your QNAP NAS
+
+4. Deploy on your QNAP NAS:
+   ```bash
+   docker stop blog-container || true
+   docker rm blog-container || true
+   docker load -i blog-app-qnap-smtp.tar
+   docker run -d --name blog-container --restart unless-stopped \
+     -p 3000:3000 \
+     blog-app:qnap-smtp
+   ```
+
+The contact form will now send emails to `pascal@riemer.digital` via your configured SMTP server.
+
 ## Repository Structure
 
 This repository is organized with the following branches:
