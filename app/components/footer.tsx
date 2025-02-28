@@ -1,3 +1,5 @@
+import ContactForm from './ContactForm'
+
 function ArrowIcon() {
   return (
     <svg
@@ -18,6 +20,9 @@ function ArrowIcon() {
 export default function Footer() {
   return (
     <footer className="mb-16">
+      {/* Contact Form */}
+      <ContactForm />
+      
       <ul className="font-sm mt-8 flex flex-col space-x-0 space-y-2 text-neutral-600 md:flex-row md:space-x-4 md:space-y-0 dark:text-neutral-300">
         <li>
           <a
