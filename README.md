@@ -248,7 +248,7 @@ QNAP NAS systems using ZFS storage pools have specific limitations that prevent 
    - Environment variables: NODE_ENV=production, NEXT_TELEMETRY_DISABLED=1
 5. Click "Create"
 
-### Method A3: Fixed Static File Serving (Recommended for UI Issues)
+### Method 3: Fixed Static File Serving (Recommended for UI Issues)
 
 If you're experiencing 404 errors for JavaScript/CSS files or UI rendering issues, use this method:
 
@@ -321,12 +321,13 @@ This branch contains several helper scripts for QNAP deployment:
 | `fix-static-files.sh` | Fixes static file serving issues |
 | `fix-qnap-amd64.sh` | AMD64-specific build with static file fixes |
 | `qnap-run.sh` | Helper script for running on QNAP |
+| `create-qnap-image.sh` | All-in-one optimized image builder |
 
 ### Troubleshooting QNAP Deployment
 
 If you encounter issues with your deployment:
 
-1. **404 Errors for CSS/JS**: Use the static file fix method (A3)
+1. **404 Errors for CSS/JS**: Use the static file fix method (Method 3)
 2. **Platform Mismatch Warnings**: Use the AMD64-specific builds
 3. **Permission Errors**: The specialized Dockerfiles handle these automatically
 4. **Blank Pages/UI Issues**: Check that static files are being served correctly
@@ -337,21 +338,22 @@ The blog will be accessible at http://[YOUR-QNAP-IP]:3000
 
 This repository is organized with the following branches:
 
-- **main**: Standard deployment version for most environments
-- **qnap-fixes**: Special branch containing QNAP-specific optimizations
+- **main**: The primary development branch with standard functionality
+- **qnap-fixes**: Special branch containing QNAP-specific optimizations for static file serving issues
 
 To switch between branches:
 ```bash
+# For standard development
+git checkout main
+
 # For QNAP-specific deployment
 git checkout qnap-fixes
-
-# For standard deployment
-git checkout main
 ```
 
 The `qnap-fixes` branch includes these additional files:
 - `Dockerfile.qnap`: Basic QNAP-optimized Dockerfile
 - `Dockerfile.qnap-static-fix`: Enhanced Dockerfile with static file fixes
-- `fix-static-files.sh`: Script to build with static file fixes
+- `fix-static-files.sh`: Script for building with proper static file handling
 - `build-for-qnap-amd64.sh`: Script for AMD64-specific builds
 - `qnap-run.sh`: Helper script for running on QNAP
+- `create-qnap-image.sh`: All-in-one script for creating an optimized QNAP image
