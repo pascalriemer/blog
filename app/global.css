@@ -148,3 +148,12 @@ table {
 .title {
   text-wrap: balance;
 }
+
+/* Honeypot anti-spam - Hide these fields from humans but bots can still see them */
+.antispam {
+  display: none !important;
+  position: absolute;
+  left: -9999px;
+  opacity: 0;
+  visibility: hidden;
+}

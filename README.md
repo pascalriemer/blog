@@ -372,6 +372,17 @@ The blog includes a contact form at the bottom of the page that allows visitors 
 
 The contact form will now send emails to `pascal@riemer.digital` via your configured SMTP server.
 
+### Anti-Spam Protection
+
+The contact form includes a honeypot field to protect against spam bots:
+
+- A hidden field is added to the form that's invisible to human users but visible to bots
+- If the field is filled (which would only happen with automated submissions), the submission is silently rejected
+- This helps prevent spam without requiring additional dependencies or services
+- No CAPTCHA or other user-facing verification is needed, improving the user experience
+
+This approach catches most automated spam while being completely transparent to legitimate users.
+
 ## Repository Structure
 
 This repository is organized with the following branches:

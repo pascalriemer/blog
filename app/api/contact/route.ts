@@ -29,7 +29,17 @@ const createTransporter = () => {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, message } = body;
+    const { name, email, message, _honeypot } = body;
+
+    // Anti-spam honeypot check
+    if (_honeypot) {
+      console.log('Honeypot field filled - rejecting as spam');
+      // Return success to the bot but don't actually send the email
+      return NextResponse.json(
+        { success: true, message: 'Your message has been sent successfully!' },
+        { status: 200 }
+      );
+    }
 
     // Validate the request
     if (!name || !email || !message) {

@@ -6,20 +6,33 @@ export default function ContactForm() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
+  const [honeypot, setHoneypot] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
 
-    // Basic validation
+    if (honeypot) {
+      console.log('Honeypot triggered - likely bot submission')
+      setStatus('success')
+      setName('')
+      setEmail('')
+      setMessage('')
+      setHoneypot('')
+      
+      setTimeout(() => {
+        setStatus('idle')
+      }, 5000)
+      return
+    }
+
     if (!name || !email || !message) {
       setStatus('error')
       setErrorMessage('All fields are required')
       return
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       setStatus('error')
@@ -39,6 +52,7 @@ export default function ContactForm() {
           name,
           email,
           message,
+          _honeypot: honeypot,
           recipient: 'pascal@riemer.digital'
         }),
       })
@@ -53,8 +67,8 @@ export default function ContactForm() {
       setName('')
       setEmail('')
       setMessage('')
+      setHoneypot('')
       
-      // Reset success message after 5 seconds
       setTimeout(() => {
         setStatus('idle')
       }, 5000)
@@ -71,6 +85,21 @@ export default function ContactForm() {
       <h2 className="text-xl font-semibold tracking-tighter mb-4">Contact Me</h2>
       
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="antispam" aria-hidden="true">
+          <label htmlFor="_honeypot" className="antispam">
+            Skip this field
+          </label>
+          <input
+            id="_honeypot"
+            name="_honeypot"
+            type="text"
+            value={honeypot}
+            onChange={(e) => setHoneypot(e.target.value)}
+            autoComplete="off"
+            tabIndex={-1}
+          />
+        </div>
+
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
             Name
