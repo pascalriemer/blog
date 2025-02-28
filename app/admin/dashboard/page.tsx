@@ -17,6 +17,8 @@ export default function AdminDashboard() {
   const [contactEmail, setContactEmail] = useState('');
   const [emailStatus, setEmailStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [emailErrorMessage, setEmailErrorMessage] = useState('');
+  const [testEmailStatus, setTestEmailStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [testEmailMessage, setTestEmailMessage] = useState('');
 
   // Load current contact email when component mounts
   useEffect(() => {
@@ -123,6 +125,47 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSendTestEmail = async () => {
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(contactEmail)) {
+      setTestEmailStatus('error');
+      setTestEmailMessage('Please enter a valid email address');
+      return;
+    }
+    
+    setTestEmailStatus('loading');
+    setTestEmailMessage('');
+
+    try {
+      const response = await fetch('/api/settings/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          contactEmail,
+          sendTestEmail: true
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send test email');
+      }
+      
+      if (data.testEmailSent) {
+        setTestEmailStatus('success');
+        setTestEmailMessage(`Test email sent to ${contactEmail}. Please check your inbox.`);
+      } else {
+        setTestEmailStatus('error');
+        setTestEmailMessage(data.testEmailError || 'Failed to send test email. Check your SMTP settings.');
+      }
+    } catch (error) {
+      setTestEmailStatus('error');
+      setTestEmailMessage(error instanceof Error ? error.message : 'Failed to send test email');
+    }
+  };
+
   const handleLogout = () => {
     // Clear the auth cookie by setting a past expiration
     document.cookie = 'auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
@@ -189,6 +232,36 @@ export default function AdminDashboard() {
                       </div>
                     )}
                     
+                    {testEmailStatus === 'success' && (
+                      <div className="mt-4 rounded-md bg-green-50 dark:bg-green-900 p-4">
+                        <div className="flex">
+                          <div className="ml-3">
+                            <h3 className="text-sm font-medium text-green-800 dark:text-green-200">
+                              Test Email Sent
+                            </h3>
+                            <div className="mt-2 text-sm text-green-700 dark:text-green-300">
+                              <p>{testEmailMessage}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {testEmailStatus === 'error' && (
+                      <div className="mt-4 rounded-md bg-red-50 dark:bg-red-900 p-4">
+                        <div className="flex">
+                          <div className="ml-3">
+                            <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                              Test Email Failed
+                            </h3>
+                            <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                              <p>{testEmailMessage}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
                     <form className="mt-5 space-y-4" onSubmit={handleUpdateContactEmail}>
                       {emailStatus === 'error' && (
                         <div className="rounded-md bg-red-50 dark:bg-red-900 p-4">
@@ -224,13 +297,22 @@ export default function AdminDashboard() {
                         </p>
                       </div>
                       
-                      <div>
+                      <div className="flex space-x-3">
                         <button
                           type="submit"
                           disabled={emailStatus === 'loading'}
-                          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
-                          {emailStatus === 'loading' ? 'Updating...' : 'Update Contact Email'}
+                          {emailStatus === 'loading' ? 'Updating...' : 'Update Email'}
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={handleSendTestEmail}
+                          disabled={testEmailStatus === 'loading'}
+                          className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        >
+                          {testEmailStatus === 'loading' ? 'Sending...' : 'Send Test Email'}
                         </button>
                       </div>
                     </form>

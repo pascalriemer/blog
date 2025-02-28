@@ -63,8 +63,8 @@ const createTransporter = () => {
   }
 };
 
-// Function to send an email (exported for use in other APIs)
-export async function sendEmail(mailOptions) {
+// Helper function to send an email (internal use only, not exported)
+async function sendMailWithNodemailer(mailOptions) {
   if (!validateEnvVariables()) {
     throw new Error('SMTP environment variables not properly configured');
   }
