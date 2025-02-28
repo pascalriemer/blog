@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# This script fixes static file serving issues in the Next.js app
+# specifically for AMD64 Linux servers
+
 echo "🧹 Cleaning up previous builds..."
 rm -rf .next node_modules
 
@@ -40,20 +43,18 @@ EOL
 fi
 
 echo "🔨 Building Docker image with special static file handling..."
-docker buildx build --platform linux/amd64 -f Dockerfile.qnap-static-fix -t blog-app:qnap-static-fixed --load .
+docker buildx build --platform linux/amd64 -f Dockerfile.amd64-static-fix -t blog-app:amd64-static-fixed --load .
 
-echo "💾 Saving the image..."
-docker save blog-app:qnap-static-fixed -o blog-app-qnap-static-fixed.tar
+echo "💾 Saving the image to a tar file..."
+docker save blog-app:amd64-static-fixed -o blog-app-amd64-static-fixed.tar
 
-echo "✅ QNAP-optimized image with static file fixes built and saved as blog-app-qnap-static-fixed.tar"
-echo ""
-echo "📋 To deploy on your QNAP NAS:"
-echo "1. Transfer blog-app-qnap-static-fixed.tar to your NAS"
-echo "2. SSH into your NAS and run:"
-echo "   docker stop blog-container"
-echo "   docker rm blog-container"
-echo "   docker load -i blog-app-qnap-static-fixed.tar"
-echo "   docker run -d -p 3000:3000 --name blog-container blog-app:qnap-static-fixed"
+echo "✅ AMD64-optimized image with static file fixes built and saved as blog-app-amd64-static-fixed.tar"
+
+echo "📋 To deploy on your Linux server:"
+echo "1. Transfer blog-app-amd64-static-fixed.tar to your server"
+echo "2. Import the image:"
+echo "   docker load -i blog-app-amd64-static-fixed.tar"
+echo "   docker run -d -p 3000:3000 --name blog-container blog-app:amd64-static-fixed"
 echo ""
 echo "🔍 This special build fixes the static file issues by:"
 echo "  - Ensuring .next/static directory is properly copied"

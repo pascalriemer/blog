@@ -174,315 +174,174 @@ To personalize your biography:
 - The standalone output configuration is used for better performance in production.
 - The quotes system uses a cache-busting strategy to ensure fresh quotes on each page load.
 
-## Cross-Platform Deployment
+## AMD64 Linux Server Deployment
 
-If you're encountering architecture compatibility issues (like "exec format error"), use the architecture-specific build approach:
+AMD64 Linux servers have specific considerations for optimal deployment. Follow these steps for deployment:
 
-1. Run the multi-architecture build script:
-   ```bash
-   ./build-multiarch.sh
-   ```
+### Basic Deployment
 
-2. This creates two image files:
-   - `blog-app-amd64.tar` - For standard x86_64 servers (most cloud and on-premise servers)
-   - `blog-app-arm64.tar` - For ARM-based systems (Apple Silicon Macs, Raspberry Pi, etc.)
+1. Build the Docker image:
 
-3. In Portainer:
-   - Go to **Images** and click **Import**
-   - Select and upload the appropriate image file based on your server architecture
-     - For standard servers (x86_64/AMD64): Upload `blog-app-amd64.tar`
-     - For ARM-based servers (ARM64): Upload `blog-app-arm64.tar`
+```bash
+chmod +x build-for-amd64.sh
+./build-for-amd64.sh
+```
 
-4. Update your docker-compose.yml to use the appropriate image tag:
-   ```yaml
-   services:
-     blog:
-       # For AMD64/x86_64 servers:
-       image: blog-app:amd64
-       # For ARM64 servers (uncomment the line below and comment out the line above):
-       #image: blog-app:arm64
-   ```
+2. Transfer the generated `blog-app-amd64.tar` file to your Linux server.
 
-This approach ensures your application works regardless of architecture differences between your development machine and deployment server.
+3. On your Linux server, import the image:
 
-## QNAP NAS Deployment
-
-QNAP NAS systems using ZFS storage pools have specific limitations that prevent direct Docker builds. Follow these steps for deployment:
-
-### Method 1: Pre-built Image (Basic)
-
-1. On your development machine, build and export the image:
-   ```bash
-   ./build-for-qnap.sh
-   ```
-
-2. Transfer the generated `blog-app-qnap.tar` file to your QNAP NAS.
-
-3. On your QNAP NAS, import the image:
-   ```bash
-   docker load -i blog-app-qnap.tar
-   ```
+```bash
+docker load -i blog-app-amd64.tar
+```
 
 4. Run the container:
-   ```bash
-   # Option 1: Use the provided script
-   chmod +x qnap-run.sh
-   ./qnap-run.sh
-   
-   # Option 2: Run manually
-   docker run -d --name blog-container --restart unless-stopped \
-     -p 3000:3000 \
-     -e NODE_ENV=production \
-     -e NEXT_TELEMETRY_DISABLED=1 \
-     blog-app:qnap
-   ```
 
-### Method 2: Using Container Station UI
+```bash
+chmod +x amd64-run.sh
+./amd64-run.sh
+```
 
-1. In Container Station, go to "Create" > "Import" 
-2. Select your transferred `blog-app-qnap.tar` file
-3. After importing, find the image and click "Create Container"
-4. Configure:
-   - Name: blog-container
-   - Port mapping: 3000:3000
-   - Environment variables: NODE_ENV=production, NEXT_TELEMETRY_DISABLED=1
-5. Click "Create"
+Alternatively, you can use the Container Station UI on your server:
 
-### Method 3: Fixed Static File Serving (Recommended for UI Issues)
+1. Go to Container Station > Create > Import
+2. Select your transferred `blog-app-amd64.tar` file
+3. Configure the container with port 3000 exposed
 
-If you're experiencing 404 errors for JavaScript/CSS files or UI rendering issues, use this method:
+### Fixing Static File Issues
 
-1. On your development machine, build and export the optimized image with static file fixes:
-   ```bash
-   # Make the script executable
-   chmod +x fix-static-files.sh
-   
-   # Run the optimized build script
-   ./fix-static-files.sh
-   ```
+If you encounter issues with static files not loading correctly (common on some Linux servers), use the static file fix:
 
-2. Transfer the generated `blog-app-qnap-static-fixed.tar` file to your QNAP NAS.
+1. Build a fixed image:
 
-3. On your QNAP NAS, import and run the fixed image:
-   ```bash
-   # Stop and remove any existing container
-   docker stop blog-container || true
-   docker rm blog-container || true
-   
-   # Load the fixed image
-   docker load -i blog-app-qnap-static-fixed.tar
-   
-   # Run the container with the fixed image
-   docker run -d --name blog-container --restart unless-stopped \
-     -p 3000:3000 \
-     -e NODE_ENV=production \
-     -e NEXT_TELEMETRY_DISABLED=1 \
-     blog-app:qnap-static-fixed
-   ```
+```bash
+chmod +x fix-static-files.sh
+./fix-static-files.sh
+```
 
-This method specifically fixes issues with static file serving by:
-- Ensuring `.next/static` directory is properly copied and accessible
-- Setting correct file permissions on all directories
-- Using proper Next.js standalone configuration
-- Optimizing the container for QNAP's filesystem limitations
+2. Transfer the generated `blog-app-amd64-static-fixed.tar` file to your Linux server.
+
+3. On your Linux server, import and run the fixed image:
+
+```bash
+# Stop and remove existing container
+docker stop blog-container
+docker rm blog-container
+
+# Import the fixed image
+docker load -i blog-app-amd64-static-fixed.tar
+
+# Run with the fixed image
+docker run -d -p 3000:3000 --name blog-container blog-app:amd64-static-fixed
+```
+
+This fixes common issues by:
+- Ensuring proper file permissions
+- Correctly configuring Next.js for standalone mode
+- Optimizing the container for Linux filesystem limitations
 
 ### AMD64-Specific Builds
 
-QNAP NAS systems typically use x86_64/AMD64 architecture. To avoid platform mismatch warnings and ensure optimal performance:
+AMD64 Linux servers typically use x86_64/AMD64 architecture. To avoid platform mismatch warnings and ensure optimal performance:
 
-1. For standard deployment:
-   ```bash
-   # Make the script executable
-   chmod +x build-for-qnap-amd64.sh
-   
-   # Build AMD64-specific image
-   ./build-for-qnap-amd64.sh
-   ```
+```bash
+# For AMD64-specific build
+chmod +x build-for-amd64-native.sh
+./build-for-amd64-native.sh
 
-2. For deployment with static file fixes:
-   ```bash
-   # Make the script executable
-   chmod +x fix-qnap-amd64.sh
-   
-   # Build AMD64-specific image with static file fixes
-   ./fix-qnap-amd64.sh
-   ```
+# For AMD64-specific build with static file fixes
+chmod +x fix-amd64-static.sh
+./fix-amd64-static.sh
+```
 
-The generated tar files will be properly tagged for AMD64 architecture.
+### Additional AMD64-Specific Scripts
 
-### Additional QNAP-Specific Scripts
-
-This branch contains several helper scripts for QNAP deployment:
+This branch contains several helper scripts for AMD64 deployment:
 
 | Script | Purpose |
 |--------|---------|
-| `build-for-qnap.sh` | Basic build script for QNAP |
-| `build-for-qnap-amd64.sh` | AMD64-specific build |
-| `fix-static-files.sh` | Fixes static file serving issues |
-| `fix-qnap-amd64.sh` | AMD64-specific build with static file fixes |
-| `qnap-run.sh` | Helper script for running on QNAP |
-| `create-qnap-image.sh` | All-in-one optimized image builder |
+| `build-for-amd64.sh` | Basic build script for AMD64 |
+| `build-for-amd64-native.sh` | AMD64-specific build |
+| `fix-amd64-deploy.sh` | Basic fixes for AMD64 deployment |
+| `fix-amd64-static.sh` | AMD64-specific build with static file fixes |
+| `amd64-run.sh` | Helper script for running on AMD64 |
+| `create-amd64-image.sh` | All-in-one optimized image builder |
 
-### Troubleshooting QNAP Deployment
+### Troubleshooting AMD64 Deployment
 
-If you encounter issues with your deployment:
+If you encounter issues with the blog not loading correctly:
 
-1. **404 Errors for CSS/JS**: Use the static file fix method (Method 3)
-2. **Platform Mismatch Warnings**: Use the AMD64-specific builds
-3. **Permission Errors**: The specialized Dockerfiles handle these automatically
-4. **Blank Pages/UI Issues**: Check that static files are being served correctly
-
-The blog will be accessible at http://[YOUR-QNAP-IP]:3000
-
-### Contact Form with SMTP
-
-The blog includes a contact form at the bottom of the page that allows visitors to send you messages directly. To enable email sending via SMTP:
-
-1. Create a `.env` file with your SMTP settings (copy from `.env.example`):
-   ```
-   # Contact Form SMTP Configuration
-   SMTP_HOST=smtp.example.com
-   SMTP_PORT=587
-   SMTP_SECURE=false
-   SMTP_USER=your-smtp-username
-   SMTP_PASSWORD=your-smtp-password
-   SMTP_FROM=contact@yourdomain.com
-   ```
-
-2. Build a special Docker image with SMTP settings included:
+1. Check if the container is running:
    ```bash
-   # Make the script executable
-   chmod +x create-qnap-image-with-smtp.sh
-   
-   # Run the script
-   ./create-qnap-image-with-smtp.sh
+   docker ps
    ```
 
-3. Transfer the generated `blog-app-qnap-smtp.tar` to your QNAP NAS
-
-4. Deploy on your QNAP NAS using one of these methods:
-
-   **Method A: Using Docker Commands**
+2. Check container logs:
    ```bash
-   docker stop blog-container || true
-   docker rm blog-container || true
-   docker load -i blog-app-qnap-smtp.tar
-   docker run -d --name blog-container --restart unless-stopped \
-     -p 3000:3000 \
-     blog-app:qnap-smtp
+   docker logs blog-container
    ```
 
-   **Method B: Using Docker Compose** (Recommended)
-   ```bash
-   # Transfer docker-compose.qnap.yml and deploy-with-compose.sh to your QNAP
-   # Then run:
-   chmod +x deploy-with-compose.sh
-   ./deploy-with-compose.sh
-   ```
+3. Verify the blog is accessible at http://[YOUR-SERVER-IP]:3000
 
-The contact form will now send emails to `pascal@riemer.digital` via your configured SMTP server.
+4. If static assets aren't loading, try the static file fix method above.
 
-### Anti-Spam Protection
+### Deployment with SMTP Support
 
-The contact form includes a honeypot field to protect against spam bots:
+To deploy with SMTP support for the contact form:
 
-- A hidden field is added to the form that's invisible to human users but visible to bots
-- If the field is filled (which would only happen with automated submissions), the submission is silently rejected
-- This helps prevent spam without requiring additional dependencies or services
-- No CAPTCHA or other user-facing verification is needed, improving the user experience
+1. Create a `.env` file with your SMTP settings (see `.env.example`)
 
-This approach catches most automated spam while being completely transparent to legitimate users.
-
-### Admin Authentication
-
-The blog includes a secure admin authentication system with the following features:
-
-- **Default Admin Credentials**: 
-  - Username: `admin`
-  - Password: `changeme` (change this immediately after first login!)
-
-- **Authentication Features**:
-  - JWT-based authentication with HTTP-only cookies
-  - Password reset via email using SMTP
-  - Dashboard for password management
-
-#### Customizing Admin Credentials via Environment Variables
-
-For increased security, you can override the default admin credentials using environment variables in your Docker Compose deployment:
-
-1. **Simple Override**: Set environment variables directly in your docker-compose.yml file:
-
-```yaml
-services:
-  blog:
-    # other settings...
-    environment:
-      # SMTP settings...
-      - ADMIN_USERNAME=your_custom_username
-      # Note: For direct password use (less secure but simpler)
-      - ADMIN_PASSWORD_HASH=generated_password_hash
-      - ADMIN_PASSWORD_SALT=your_custom_salt
-      - JWT_SECRET=your_custom_secret
-      # IMPORTANT: Set this to your email for password resets
-      - ADMIN_EMAIL=your-actual-email@example.com
-```
-
-2. **Secure Method**: Generate a proper password hash and set via `.env` file:
+2. Build the image with SMTP support:
 
 ```bash
-# Generate secure credentials (use the built-in script)
-./deploy-with-compose.sh         # Creates default .env
-pnpm setup-admin                 # Generates proper password hash
-
-# Then update your .env file with the values
-ADMIN_USERNAME=your_custom_username
-ADMIN_PASSWORD_HASH=hashed_password_from_setup_script
-ADMIN_PASSWORD_SALT=salt_from_setup_script
-JWT_SECRET=secret_from_setup_script
-ADMIN_EMAIL=your-actual-email@example.com  # Required for password resets
+chmod +x create-amd64-image-with-smtp.sh
+./create-amd64-image-with-smtp.sh
 ```
 
-3. **Production Deployment Example**:
+3. Transfer the generated `blog-app-amd64-smtp.tar` to your Linux server
+
+4. Deploy on your Linux server using one of these methods:
+
+#### Method 1: Simple Docker Run
 
 ```bash
-# Create a secure .env file
-cat > .env << EOL
-# SMTP settings...
+# Import the image
+docker load -i blog-app-amd64-smtp.tar
 
-# Admin authentication with custom values
-ADMIN_USERNAME=admin_prod
-ADMIN_PASSWORD_HASH=c73af9b33462f0ec13447ac89c70f9b72cb34ea95459d8979e19da83d188e8024db4d9d13a40c583a6489eb16af7cb57a66e0e73d51be31098b2459a33add77d
-ADMIN_PASSWORD_SALT=c5eb0c1abcdef098765432109876fedcba
-JWT_SECRET=$(openssl rand -hex 32)
-ADMIN_EMAIL=admin@yourdomain.com
-EOL
-
-# Deploy with custom credentials
-docker-compose -f docker-compose.qnap.yml up -d
+# Run the container
+docker run -d -p 3000:3000 --name blog-container blog-app:amd64-smtp
 ```
 
-Note that when you change your admin password through the UI, the system will display a new password hash that should be updated in your environment variables for persistence across container restarts. Password reset emails will be sent to the email address specified in ADMIN_EMAIL.
+#### Method 2: Docker Compose (Recommended)
+
+```bash
+# Transfer docker-compose.amd64.yml and deploy-with-compose.sh to your server
+chmod +x deploy-with-compose.sh
+./deploy-with-compose.sh
+```
+
+docker-compose -f docker-compose.amd64.yml up -d
 
 ## Repository Structure
 
 This repository is organized with the following branches:
 
 - **main**: The primary development branch with standard functionality
-- **qnap-fixes**: Special branch containing QNAP-specific optimizations for static file serving issues
+- **amd64-fixes**: Special branch containing AMD64-specific optimizations for static file serving issues
 
 To switch between branches:
 ```bash
 # For standard development
 git checkout main
 
-# For QNAP-specific deployment
-git checkout qnap-fixes
+# For AMD64-specific deployment
+git checkout amd64-fixes
 ```
 
-The `qnap-fixes` branch includes these additional files:
-- `Dockerfile.qnap`: Basic QNAP-optimized Dockerfile
-- `Dockerfile.qnap-static-fix`: Enhanced Dockerfile with static file fixes
-- `fix-static-files.sh`: Script for building with proper static file handling
-- `build-for-qnap-amd64.sh`: Script for AMD64-specific builds
-- `qnap-run.sh`: Helper script for running on QNAP
-- `create-qnap-image.sh`: All-in-one script for creating an optimized QNAP image
+The `amd64-fixes` branch includes these additional files:
+- `Dockerfile.amd64`: Basic AMD64-optimized Dockerfile
+- `Dockerfile.amd64-static-fix`: Enhanced Dockerfile with static file fixes
+- `fix-amd64-deploy.sh`: Script for fixing deployment issues
+- `build-for-amd64-native.sh`: Script for AMD64-specific builds
+- `amd64-run.sh`: Helper script for running on AMD64
+- `create-amd64-image.sh`: All-in-one script for creating an optimized AMD64 image

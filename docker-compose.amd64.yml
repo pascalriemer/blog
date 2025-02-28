@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  blog:
+    image: blog-app:amd64-smtp
+    container_name: blog-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      # Important: SMTP values must be provided as environment variables when running this compose file
+      # SMTP credentials are required for the contact form to function
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM=${SMTP_FROM}
+      # Admin authentication settings
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH}
+      - ADMIN_PASSWORD_SALT=${ADMIN_PASSWORD_SALT}
+      - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+    # Optional: add volume mounts if you need persistent storage
+    volumes:
+      - ./content:/app/content 
